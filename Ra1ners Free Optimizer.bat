@@ -316,15 +316,15 @@ echo. %C%║%W%  ██║  ██║██║  ██║ ██║██║ ╚
 echo. %C%║%W%  ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝       ╚═╝    ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝   %C%║
 echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
 echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%             [A]%W% Registry Tweaks           %R%[B]%W% Windows Tweaks            %R%[C]%W% Ram Tweaks                   %C%║
+echo. %C%║%R%             [1]%W% Registry Tweaks           %R%[2]%W% Windows Tweaks            %R%[3]%W% Ram Tweaks                   %C%║
 echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%             [D]%W% Pc Cleanup                %R%[E]%W% Mouse and keyboard        %R%[F]%W% Power Tweaks                 %C%║
+echo. %C%║%R%             [4]%W% Pc Cleanup                %R%[5]%W% Mouse and keyboard        %R%[6]%W% Power Tweaks                 %C%║
 echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%             [G]%W% GPU Tweaks                %R%[H]%W% CPU Tweaks                %R%[I]%W% Network Tweaks               %C%║
+echo. %C%║%R%             [7]%W% GPU Tweaks                %R%[8]%W% CPU Tweaks                %R%[9]%W% Network Tweaks               %C%║
 echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%             [J]%W% Priority Tweaks           %R%[K]%W% USB Tweaks                %R%[L]%W% Optimize Games               %C%║
+echo. %C%║%R%             [10]%W% Priority Tweaks          %R%[11]%W% USB Tweaks               %R%[12]%W% Optimize Games              %C%║
 echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%             [M]%W% BCD Tweaks                %R%[N]%W% Win10 Right click menu    %R%[O] Really Advanced              %C%║
+echo. %C%║%R%             [13]%W% BCD Tweaks               %R%[14]%W% Win10 Right click menu   %R%[15] Really Advanced             %C%║
 echo. %C%║%W%                                                                                                          %C%║
 echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
 echo. %C%║%W%                                                                                                          %C%║
@@ -332,40 +332,27 @@ echo. %C%║%R%             [R]%W% Restore point             %R%[X] Exit        
 echo. %C%║%W%                                                                                                          %C%║
 echo. %C%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 
-choice /c:ABCDEFGHIJKLMNO /n /m "%BS%    %G%[Press a corresponding number]%W%   %C%Version %C%%Version%"
-set MenuItem=%errorlevel%
+set /p input=:
 
-if "%MenuItem%"=="A" goto Registry
-if "%MenuItem%"=="B" goto Windows
-if "%MenuItem%"=="C" goto Ram
-if "%MenuItem%"=="D" goto Clean
-if "%MenuItem%"=="E" goto KBM
-if "%MenuItem%"=="F" goto Power
-if "%MenuItem%"=="G" goto GPU
-if "%MenuItem%"=="H" goto CPU
-if "%MenuItem%"=="I" goto Net
-if "%MenuItem%"=="J" goto Priority
-if "%MenuItem%"=="K" goto USB
-if "%MenuItem%"=="L" goto Games
-if "%MenuItem%"=="M" goto BCD
-if "%MenuItem%"=="N" goto Win10
-if "%MenuItem%"=="O" goto Advanced
+if /i %input% ==1 goto Registry
+if /i %input% ==2 goto Windows
+if /i %input% ==3 goto Ram
+if /i %input% ==4 goto Clean
+if /i %input% ==5 goto KBM
+if /i %input% ==6 goto Power
+if /i %input% ==7 goto GPU
+if /i %input% ==8 goto CPU
+if /i %input% ==9 goto Net
+if /i %input% ==10 goto Priority
+if /i %input% ==11 goto USB
+if /i %input% ==12 goto Games
+if /i %input% ==13 goto BCD
+if /i %input% ==14 goto Win10
+if /i %input% ==15 goto Advanced
 
-if "%MenuItem%"=="X" goto Exit
-if "%MenuItem%"=="R" goto Restore
-if "%MenuItem%"=="Y" start https://www.youtube.com/channel/UCDoJtKw4Djr1f5Nyn8HTjTA
-
-) ELSE (
-echo Invalid Input & goto MisspellRedirect
-
-:MisspellRedirect
-cls
-echo Misspell Detected
-timeout 2
-goto RedirectMenu
-
-:RedirectMenu
-goto Menu
+if /i %input% ==x" goto Exit
+if /i %input% ==r" goto Restore
+if /i %input% ==y" start https://www.youtube.com/channel/UCDoJtKw4Djr1f5Nyn8HTjTA
 
 :Registry
 echo.%C% 
@@ -519,27 +506,26 @@ echo. %C%║%W%                                             %R%[X] Back         
 echo. %C%║%W%                                                                                                          %C%║
 echo. %C%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 
-choice /c:ABCDEFGHIJKLMNOP /n /m "%BS%    %G%[Press a corresponding Letter]"
-set MenuItem=%errorlevel%
+set /p input=:
 
-if "%MenuItem%"=="A" goto W1
-if "%MenuItem%"=="B" goto W2
-if "%MenuItem%"=="C" goto W3
-if "%MenuItem%"=="D" goto W4
-if "%MenuItem%"=="E" goto W5
-if "%MenuItem%"=="F" goto W6
-if "%MenuItem%"=="G" goto W7
-if "%MenuItem%"=="H" goto W8
-if "%MenuItem%"=="I" goto W9
-if "%MenuItem%"=="J" goto W10
-if "%MenuItem%"=="K" goto W11
-if "%MenuItem%"=="L" goto W12
-if "%MenuItem%"=="M" goto W13
-if "%MenuItem%"=="N" goto W14
-if "%MenuItem%"=="O" goto W15
-if "%MenuItem%"=="P" goto W16
+if /i %input% == 1 goto W1
+if /i %input% == 2 goto W2
+if /i %input% == 3 goto W3
+if /i %input% == 4 goto W4
+if /i %input% == 5 goto W5
+if /i %input% == 6 goto W6
+if /i %input% == 7 goto W7
+if /i %input% == 8 goto W8
+if /i %input% == 9 goto W9
+if /i %input% == 10 goto W10
+if /i %input% == 11 goto W11
+if /i %input% == 12 goto W12
+if /i %input% == 13 goto W13
+if /i %input% == 14 goto W14
+if /i %input% == 15 goto W15
+if /i %input% == 16 goto W16
 
-if "%MenuItem%"=="X" goto menu
+if /i %input% ==X goto menu
 
 ) ELSE (
 echo Invalid Input & goto MisspellRedirect
@@ -1464,15 +1450,15 @@ echo. %C%║%W%                                                                 
 echo. %C%║%W%                                             %R%[X] Back                                                     %C%║
 echo. %C%║%W%                                                                                                          %C%║
 echo. %C%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
-choice /c:1234X /n /m "%BS%    %G%[Press a corresponding Number/Letter]"
-set MenuItem=%errorlevel%
 
-if "%MenuItem%"=="1" goto C1
-if "%MenuItem%"=="2" goto C2
-if "%MenuItem%"=="3" goto C3
-if "%MenuItem%"=="4" goto C4
+set /p input=:
 
-if "%MenuItem%"=="X" goto Menu
+if /i %input% == 1 goto C1
+if /i %input% == 2 goto C2
+if /i %input% == 3 goto C3
+if /i %input% == 4 goto C4
+
+if /i %input% == X goto Menu
 
 ) ELSE (
 echo Invalid Input & goto MisspellRedirect
@@ -1791,12 +1777,12 @@ echo.%C%║           %R%[1]%w% High End CPU        %R%[2]%w% Mid end CPU       
 echo.%C%║                                                                                              %C%║
 echo.%C%╚══════════════════════════════════════════════════════════════════════════════════════════════╝
 echo.
-choice /c:123 /n /m "%BS%    %G%[Press a corresponding Number]"
-set MenuItem=%errorlevel%
 
-if "%MenuItem%"=="1" goto high
-if "%MenuItem%"=="2" goto Mid
-if "%MenuItem%"=="3" goto Low
+set /p input=:
+
+if /i %input% == 1 goto high
+if /i %input% == 2 goto Mid
+if /i %input% == 3 goto Low
 
 ) ELSE (
 echo Invalid Input & goto MisspellRedirect
@@ -1909,14 +1895,14 @@ echo.%C%║                                                                     
 echo.%C%╠══════════════════════════════════════════════════════════════════════════════════════════════╣
 echo.%C%║%W%                                    %R%[B] Menu                                               %C%║     
 echo.%C%╚══════════════════════════════════════════════════════════════════════════════════════════════╝
-choice /c:123 /n /m "%BS%    %G%[Press a corresponding Number/Letter]"
-set MenuItem=%errorlevel%
 
-if "%MenuItem%"=="1" goto C1
-if "%MenuItem%"=="2" goto C2
-if "%MenuItem%"=="3" goto C3
+set /p input=:
 
-if "%MenuItem%"=="X" goto Menu
+if /i %input% == 1 goto C1
+if /i %input% == 2 goto C2
+if /i %input% == 3 goto C3
+
+if /i %input% == X goto Menu
 
 ) ELSE (
 echo Invalid Input & goto MisspellRedirect
@@ -1955,18 +1941,16 @@ echo. %C%║%W%                     %R%[x]%w% CHOOSE THE WRONG GPU GO BACK AND C
 echo. %C%║%W%                                                                                                          %C%║
 echo. %C%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 
-choice /c:123 /n /m "%BS%    %G%[Press a corresponding Number/Letter]"
-set MenuItem=%errorlevel%
+set /p input=:
+if /i %input% == 1 goto NVIDIA1
+if /i %input% == 2 goto NVIDIA2
+if /i %input% == 3 goto NVIDIA3
+if /i %input% == 4 goto NVIDIA4
+if /i %input% == 5 goto NVIDIA5
+if /i %input% == 6 goto NVIDIA6
 
-if "%MenuItem%"=="1" goto NVIDIA1
-if "%MenuItem%"=="2" goto NVIDIA2
-if "%MenuItem%"=="3" goto NVIDIA3
-if "%MenuItem%"=="4" goto NVIDIA4
-if "%MenuItem%"=="5" goto NVIDIA5
-if "%MenuItem%"=="6" goto NVIDIA6
-
-if "%MenuItem%"=="B" goto Menu
-if "%MenuItem%"=="X" goto GPU
+if /i %input% == B goto Menu
+if /i %input% == X goto GPU
 
 ) ELSE (
 echo Invalid Input & goto MisspellRedirect
