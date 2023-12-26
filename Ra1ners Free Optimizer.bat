@@ -1,6 +1,6 @@
 @echo off
-
 set Version=1
+set DevB=Yes
 
 ::Disable UAC
 reg.exe Add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "EnableLUA" /t  REG_DWORD /d "00000000" /f
@@ -122,9 +122,9 @@ if not "%ProgramFiles(x86)%"=="" (if exist %SystemRoot%\Sysnative\* set SystemPa
 if "%processor_architecture%" neq "AMD64" (start "" /I "%SystemPath%\cmd.exe" /c "%~s0" & exit /b)
 
 ::Check For Updates
-curl -g -k -L -# -o "%tmp%\latestVersion.bat" "https://raw.githubusercontent.com/UnLovedCookie/EchoX/main/Files/Version" >nul 2>&1
-call "%tmp%\latestVersion.bat"
-if "%DevBuild%" neq "Yes" if "%Version%" lss "!latestVersion!" (cls
+curl -g -k -L -# -o "C:\Ra1nerFree\latestVersion.bat" "https://raw.githubusercontent.com/imRa1ner2/Ra1ner2.0/V1/latestVersion.bat" >nul 2>&1
+call "C:\Ra1nerFree\latestVersion.bat"
+if "%DevB%" neq "Yes" if "%Version%" lss "!latestVersion!" (cls
 	echo.
 	echo             Warning, EchoX isn't updated.
 	echo        Would you like to update to version %col2%!latestVersion!?
