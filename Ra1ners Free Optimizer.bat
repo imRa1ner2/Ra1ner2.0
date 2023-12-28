@@ -1,5 +1,5 @@
 @echo off
-set Version=1
+set Version=1.0
 set DevB=Yes
 
 ::Disable UAC
@@ -41,16 +41,23 @@ echo %BS%             press C to continue anyway
 choice /c:"CQ" /n /m "%BS%               [C] Continue  [Q] Quit" & if !errorlevel! equ 2 exit /b
 )
 
+
+::Run CMD in 32-Bit
+set SystemPath=%SystemRoot%\System32
+if not "%ProgramFiles(x86)%"=="" (if exist %SystemRoot%\Sysnative\* set SystemPath=%SystemRoot%\Sysnative)
+if "%processor_architecture%" neq "AMD64" (start "" /I "%SystemPath%\cmd.exe" /c "%~s0" & exit /b)
+
+
 if not exist "%SystemRoot%\System32\wbem\WMIC.exe" (
 ::WMI Settings
-Reg add "HKCU\Software\Ra1ner" /f
+Reg add "HKCU\Software\Ra1ner" /f >nul 2>&1
 powershell -ExecutionPolicy Unrestricted -NoProfile import-module Microsoft.PowerShell.Management;import-module Microsoft.PowerShell.Utility;^
-$GPU = Get-WmiObject win32_VideoController ^| Select-Object -ExpandProperty Name;Set-ItemProperty -Path "HKCU:\Software\Ra1ner" -Name "GPU_NAME" -Type String -Value "$GPU";^
-$mem = Get-WmiObject win32_operatingsystem ^| Select-Object -ExpandProperty TotalVisibleMemorySize;Set-ItemProperty -Path "HKCU:\Software\Ra1ner" -Name "mem" -Type String -Value "$mem";^
-$ChassisTypes = Get-WmiObject win32_SystemEnclosure ^| Select-Object -ExpandProperty ChassisTypes;Set-ItemProperty -Path "HKCU:\Software\Ra1ner" -Name "ChassisTypes" -Type String -Value "$ChassisTypes";^
+$GPU = Get-WmiObject win32_VideoController ^| Select-Object -ExpandProperty Name;Set-ItemProperty -Path "HKCU:\Software\Ra1n" -Name "GPU_NAME" -Type String -Value "$GPU";^
+$mem = Get-WmiObject win32_operatingsystem ^| Select-Object -ExpandProperty TotalVisibleMemorySize;Set-ItemProperty -Path "HKCU:\Software\Ra1n" -Name "mem" -Type String -Value "$mem";^
+$ChassisTypes = Get-WmiObject win32_SystemEnclosure ^| Select-Object -ExpandProperty ChassisTypes;Set-ItemProperty -Path "HKCU:\Software\Ra1n" -Name "ChassisTypes" -Type String -Value "$ChassisTypes";^
 $Degrees = Get-WmiObject -Namespace "root/wmi" MSAcpi_ThermalZoneTemperature ^| Select-Object -ExpandProperty CurrentTemperature;Set-ItemProperty -Path "HKCU:\Software\Ra1n" -Name "Degrees" -Type String -Value "$Degrees";^
-$CORES = Get-WmiObject win32_processor ^| Select-Object -ExpandProperty NumberOfCores;Set-ItemProperty -Path "HKCU:\Software\Ra1ner" -Name "CORES" -Type String -Value "$CORES";^
-$osarchitecture = Get-WmiObject win32_operatingsystem ^| Select-Object -ExpandProperty osarchitecture;Set-ItemProperty -Path "HKCU:\Software\Ra1ner" -Name "osarchitecture" -Type String -Value "$osarchitecture"
+$CORES = Get-WmiObject win32_processor ^| Select-Object -ExpandProperty NumberOfCores;Set-ItemProperty -Path "HKCU:\Software\Ra1n" -Name "CORES" -Type String -Value "$CORES";^
+$osarchitecture = Get-WmiObject win32_operatingsystem ^| Select-Object -ExpandProperty osarchitecture;Set-ItemProperty -Path "HKCU:\Software\Ra1n" -Name "osarchitecture" -Type String -Value "$osarchitecture"
 for /f "tokens=3 skip=2" %%a in ('Reg query "HKCU\Software\Ra1ner" /v CORES') do set CORES=%%a
 for /f "tokens=*" %%a in ('Reg query "HKCU\Software\Ra1ner" /v GPU_NAME') do set GPU_NAME=%%a
 for /f "tokens=3 skip=2" %%a in ('Reg query "HKCU\Software\Ra1ner" /v mem') do set mem=%%a
@@ -107,34 +114,6 @@ echo.╚════════════════════════
 choice /c:"CQ" /n /m "%BS%               [C] Continue  [Q] Quit" & if !errorlevel! equ 2 exit /b
 )
 
-::Check For Internet
-Ping www.google.nl -n 1 -w 1000 >nul
-if %errorlevel% neq 0 (
-echo.
-echo %BS%               No Internet Connection
-echo %BS%             press C to continue anyway
-choice /c:"CQ" /n /m "%BS%               [C] Continue  [Q] Quit" & if !errorlevel! equ 2 exit /b
-)
-
-::Run CMD in 32-Bit
-set SystemPath=%SystemRoot%\System32
-if not "%ProgramFiles(x86)%"=="" (if exist %SystemRoot%\Sysnative\* set SystemPath=%SystemRoot%\Sysnative)
-if "%processor_architecture%" neq "AMD64" (start "" /I "%SystemPath%\cmd.exe" /c "%~s0" & exit /b)
-
-::Check For Updates
-curl -g -k -L -# -o "C:\Ra1nerFree\latestVersion.bat" "https://raw.githubusercontent.com/imRa1ner2/Ra1ner2.0/V1/latestVersion.bat" >nul 2>&1
-call "C:\Ra1nerFree\latestVersion.bat"
-if "%DevB%" neq "Yes" if "%Version%" lss "!latestVersion!" (cls
-	echo.
-	echo             Warning, EchoX isn't updated.
-	echo        Would you like to update to version %col2%!latestVersion!?
-	echo.
-	choice /c:"YN" /n /m "%BS%                   [Y] Yes  [N] No"
-	if !errorlevel! equ 1 (
-		curl -L -o "%~s0" "https://github.com/UnLovedCookie/EchoX/releases/latest/download/EchoX.bat" >nul 2>&1
-		call "%~s0"
-	)
-)
 ::Extra Settings
 set DualBoot=Unknown
 set CPU_NAME=%PROCESSOR_IDENTIFIER%
@@ -303,56 +282,65 @@ cls
 :Menu
 chcp 65001 >nul 2>&1
 cls
-echo.
-echo.
-echo.
-echo.
-echo. %C%╔══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
-echo. %C%║%W%  ██████╗  █████╗  ██╗███╗   ██╗███████╗██████╗     ████████╗██╗    ██╗███████╗ █████╗ ██╗  ██╗███████╗   %C%║
-echo. %C%║%W%  ██╔══██╗██╔══██╗███║████╗  ██║██╔════╝██╔══██╗    ╚══██╔══╝██║    ██║██╔════╝██╔══██╗██║ ██╔╝██╔════╝   %C%║
-echo. %C%║%W%  ██████╔╝███████║╚██║██╔██╗ ██║█████╗  ██████╔╝       ██║   ██║ █╗ ██║█████╗  ███████║█████╔╝ ███████╗   %C%║
-echo. %C%║%W%  ██╔══██╗██╔══██║ ██║██║╚██╗██║██╔══╝  ██╔══██╗       ██║   ██║███╗██║██╔══╝  ██╔══██║██╔═██╗ ╚════██║   %C%║
-echo. %C%║%W%  ██║  ██║██║  ██║ ██║██║ ╚████║███████╗██║  ██║       ██║   ╚███╔███╔╝███████╗██║  ██║██║  ██╗███████║   %C%║
-echo. %C%║%W%  ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝       ╚═╝    ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝   %C%║
-echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%             [1]%W% Registry Tweaks           %R%[2]%W% Windows Tweaks            %R%[3]%W% Ram Tweaks                   %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%             [4]%W% Pc Cleanup                %R%[5]%W% Mouse and keyboard        %R%[6]%W% Power Tweaks                 %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%             [7]%W% GPU Tweaks                %R%[8]%W% CPU Tweaks                %R%[9]%W% Network Tweaks               %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%             [10]%W% Priority Tweaks          %R%[11]%W% USB Tweaks               %R%[12]%W% Optimize Games              %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%             [13]%W% BCD Tweaks               %R%[14]%W% Win10 Right click menu   %R%[15] Really Advanced             %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%             [R]%W% Restore point             %R%[X] Exit                         %R%[Y]%W% My Youtube                %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+echo. %B%╔══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+echo. %B%║%W%  ██████╗  █████╗  ██╗███╗   ██╗███████╗██████╗     ████████╗██╗    ██╗███████╗ █████╗ ██╗  ██╗███████╗   %B%║
+echo. %B%║%W%  ██╔══██╗██╔══██╗███║████╗  ██║██╔════╝██╔══██╗    ╚══██╔══╝██║    ██║██╔════╝██╔══██╗██║ ██╔╝██╔════╝   %B%║
+echo. %B%║%W%  ██████╔╝███████║╚██║██╔██╗ ██║█████╗  ██████╔╝       ██║   ██║ █╗ ██║█████╗  ███████║█████╔╝ ███████╗   %B%║
+echo. %B%║%W%  ██╔══██╗██╔══██║ ██║██║╚██╗██║██╔══╝  ██╔══██╗       ██║   ██║███╗██║██╔══╝  ██╔══██║██╔═██╗ ╚════██║   %B%║
+echo. %B%║%W%  ██║  ██║██║  ██║ ██║██║ ╚████║███████╗██║  ██║       ██║   ╚███╔███╔╝███████╗██║  ██║██║  ██╗███████║   %B%║
+echo. %B%║%W%  ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝       ╚═╝    ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝   %B%║
+echo. %B%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+echo. %B%║%W%                                         Page 1 Version %Version%                                            %B%║
+echo. %B%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%             [1]%W% Registry Tweaks           %R%[2]%W% Windows Tweaks            %R%[3]%W% Ram Tweaks                   %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%             [4]%W% Pc Cleanup                %R%[5]%W% Mouse and keyboard        %R%[6]%W% Power Tweaks                 %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%             [7]%W% GPU Tweaks                %R%[8]%W% CPU Tweaks                %R%[9]%W% Network Tweaks               %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%             [10]%W% Priority Tweaks          %R%[11]%W% USB Tweaks               %R%[12]%W% Optimize Games              %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%             [13]%W% BCD Tweaks               %R%[14]%W% Win10 Right click menu   %R%[15] Really Advanced             %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%             [R]%W% Restore point             %R%[X] Exit                         %R%[Y]%W% My Youtube                %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 
 set /p input=:
+if /i %input% == 1 goto Registry
+if /i %input% == 2 goto Windows
+if /i %input% == 3 goto Ram
+if /i %input% == 4 goto Clean
+if /i %input% == 5 goto KBM
+if /i %input% == 6 goto Power
+if /i %input% == 7 goto GPU
+if /i %input% == 8 goto CPU
+if /i %input% == 9 goto Net
+if /i %input% == 10 goto Priority
+if /i %input% == 11 goto USB
+if /i %input% == 12 goto Games
+if /i %input% == 13 goto BCD
+if /i %input% == 14 goto Win10
+if /i %input% == 15 goto Advanced
 
-if /i %input% ==1 goto Registry
-if /i %input% ==2 goto Windows
-if /i %input% ==3 goto Ram
-if /i %input% ==4 goto Clean
-if /i %input% ==5 goto KBM
-if /i %input% ==6 goto Power
-if /i %input% ==7 goto GPU
-if /i %input% ==8 goto CPU
-if /i %input% ==9 goto Net
-if /i %input% ==10 goto Priority
-if /i %input% ==11 goto USB
-if /i %input% ==12 goto Games
-if /i %input% ==13 goto BCD
-if /i %input% ==14 goto Win10
-if /i %input% ==15 goto Advanced
+if /i %input% == X goto Exit
+if /i %input% == R goto Restore
+if /i %input% == Y start https://www.youtube.com/channel/UCDoJtKw4Djr1f5Nyn8HTjTA
 
-if /i %input% ==x" goto Exit
-if /i %input% ==r" goto Restore
-if /i %input% ==y" start https://www.youtube.com/channel/UCDoJtKw4Djr1f5Nyn8HTjTA
+) ELSE (
+echo Invalid Input & goto MisspellRedirect
+
+:MisspellRedirect
+cls
+echo Misspell Detected
+timeout 2
+goto RedirectMenu
+
+:RedirectMenu
+goto Menu
 
 :Registry
 echo.%C% 
@@ -361,74 +349,74 @@ echo. ║                           ║
 echo  ║   Registry Tweaks         ║
 echo. ║                           ║   
 echo. ╚═══════════════════════════╝
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "ConvertibleSlateMode" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d "56" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /v "CoalescingTimerInterval" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "Attributes" /t REG_DWORD /d "2" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "Affinity" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "Background Only" /t REG_SZ /d "False" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "Clock Rate" /t REG_DWORD /d "10000" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "GPU Priority" /t REG_DWORD /d "8" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "Priority" /t REG_DWORD /d "6" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "Scheduling Category" /t REG_SZ /d "High" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "SFIO Priority" /t REG_SZ /d "High" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "BackgroundPriority" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "Latency Sensitive" /t REG_SZ /d "True" /f >nul 2>&1
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "ConvertibleSlateMode" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d "56" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /v "CoalescingTimerInterval" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "Attributes" /t REG_DWORD /d "2" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "Affinity" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "Background Only" /t REG_SZ /d "False" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "Clock Rate" /t REG_DWORD /d "10000" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "GPU Priority" /t REG_DWORD /d "8" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "Priority" /t REG_DWORD /d "6" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "Scheduling Category" /t REG_SZ /d "High" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "SFIO Priority" /t REG_SZ /d "High" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "BackgroundPriority" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\75b0ae3f-bce0-45a7-8c89-c9611c25e100" /v "Latency Sensitive" /t REG_SZ /d "True" /f 
 Reg.exe add "HKCU\Control Panel\Desktop" /v "AutoEndTasks" /t REG_SZ /d "1" /f
 Reg.exe add "HKCU\Control Panel\Desktop" /v "HungAppTimeout" /t REG_SZ /d "1000" /f
 Reg.exe add "HKCU\Control Panel\Desktop" /v "WaitToKillAppTimeout" /t REG_SZ /d "2000" /f
 Reg.exe add "HKCU\Control Panel\Desktop" /v "LowLevelHooksTimeout" /t REG_SZ /d "1000" /f
 Reg.exe add "HKCU\Control Panel\Desktop" /v "MenuShowDelay" /t REG_SZ /d "0" /f
 Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control" /v "WaitToKillServiceTimeout" /t REG_SZ /d "2000" /f
-Reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "HibernateEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v "EnablePrefetcher" /t REG_DWORD /d "3" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v "EnableSuperfetch" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "ClearPageFileAtShutdown" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d "1" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "NonPagedPoolQuota" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "NonPagedPoolSize" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "PagedPoolQuota" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "PagedPoolSize" /t REG_DWORD /d "192" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SecondLevelDataCache" /t REG_DWORD /d "1024" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SessionPoolSize" /t REG_DWORD /d "192" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SessionViewSize" /t REG_DWORD /d "192" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SystemPages" /t REG_DWORD /d "4294967295" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "PhysicalAddressExtension" /t REG_DWORD /d "1" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettings" /t REG_DWORD /d "1" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverride" /t REG_DWORD /d "3" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverrideMask" /t REG_DWORD /d "3" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "IoPageLockLimit" /t REG_DWORD /d "16710656" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "PoolUsageMaximum" /t REG_DWORD /d "96" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\XboxNetApiSvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\XboxGipSvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\XblAuthManager" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-Reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching" /v "SearchOrderConfig" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "EnableLua" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowSharedUserAppData" /v "value" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowStore" /v "value" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" /v "DisableTaskOffload" /t REG_DWORD /d "1" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverride" /t REG_DWORD /d "3" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverrideMask" /t REG_DWORD /d "3" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\Spooler" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\PrintNotify" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\MapsBroker" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" /v "PowerThrottlingOff" /t REG_DWORD /d "1" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\GpuEnergyDrv" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-Reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "EnableLUA" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Scheduler" /v "EnablePreemption" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v "GlobalUserDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
-Reg.exe add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "BackgroundAppGlobalToggle" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters" /v "autodisconnect" /t REG_DWORD /d "4294967295" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters" /v "Size" /t REG_DWORD /d "3" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters" /v "EnableOplocks" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters" /v "IRPStackSize" /t REG_DWORD /d "32" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters" /v "SharingViolationDelay" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters" /v "SharingViolationRetries" /t REG_DWORD /d "0" /f >nul 2>&1
-Reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
+Reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t REG_DWORD /d "1" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "HibernateEnabled" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v "EnablePrefetcher" /t REG_DWORD /d "3" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v "EnableSuperfetch" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "ClearPageFileAtShutdown" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d "1" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "NonPagedPoolQuota" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "NonPagedPoolSize" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "PagedPoolQuota" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "PagedPoolSize" /t REG_DWORD /d "192" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SecondLevelDataCache" /t REG_DWORD /d "1024" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SessionPoolSize" /t REG_DWORD /d "192" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SessionViewSize" /t REG_DWORD /d "192" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SystemPages" /t REG_DWORD /d "4294967295" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "PhysicalAddressExtension" /t REG_DWORD /d "1" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettings" /t REG_DWORD /d "1" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverride" /t REG_DWORD /d "3" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverrideMask" /t REG_DWORD /d "3" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "IoPageLockLimit" /t REG_DWORD /d "16710656" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "PoolUsageMaximum" /t REG_DWORD /d "96" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "Start" /t REG_DWORD /d "4" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\XboxNetApiSvc" /v "Start" /t REG_DWORD /d "4" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\XboxGipSvc" /v "Start" /t REG_DWORD /d "4" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\XblAuthManager" /v "Start" /t REG_DWORD /d "4" /f 
+Reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching" /v "SearchOrderConfig" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "EnableLua" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowSharedUserAppData" /v "value" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowStore" /v "value" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t REG_DWORD /d "1" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" /v "DisableTaskOffload" /t REG_DWORD /d "1" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverride" /t REG_DWORD /d "3" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverrideMask" /t REG_DWORD /d "3" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\Spooler" /v "Start" /t REG_DWORD /d "4" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\PrintNotify" /v "Start" /t REG_DWORD /d "4" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\MapsBroker" /v "Start" /t REG_DWORD /d "4" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" /v "PowerThrottlingOff" /t REG_DWORD /d "1" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\GpuEnergyDrv" /v "Start" /t REG_DWORD /d "4" /f 
+Reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "EnableLUA" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Scheduler" /v "EnablePreemption" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v "GlobalUserDisabled" /t REG_DWORD /d "1" /f 
+Reg.exe add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "BackgroundAppGlobalToggle" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters" /v "autodisconnect" /t REG_DWORD /d "4294967295" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters" /v "Size" /t REG_DWORD /d "3" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters" /v "EnableOplocks" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters" /v "IRPStackSize" /t REG_DWORD /d "32" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters" /v "SharingViolationDelay" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters" /v "SharingViolationRetries" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t REG_DWORD /d "1" /f 
 Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\DXGKrnl" /v "MonitorLatencyTolerance" /t REG_DWORD /d "1" /f 
 Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\DXGKrnl" /v "MonitorRefreshLatencyTolerance" /t REG_DWORD /d "1" /f 
 Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "ExitLatency" /t REG_DWORD /d "1" /f 
@@ -475,39 +463,38 @@ echo.
 echo.
 echo.
 echo.
-echo. %C%╔══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
-echo. %C%║%W%                       ██╗    ██╗██╗███╗   ██╗██████╗  ██████╗ ██╗    ██╗███████╗                         %C%║
-echo. %C%║%W%                       ██║    ██║██║████╗  ██║██╔══██╗██╔═══██╗██║    ██║██╔════╝                         %C%║
-echo. %C%║%W%                       ██║ █╗ ██║██║██╔██╗ ██║██║  ██║██║   ██║██║ █╗ ██║███████╗                         %C%║
-echo. %C%║%W%                       ██║███╗██║██║██║╚██╗██║██║  ██║██║   ██║██║███╗██║╚════██║                         %C%║
-echo. %C%║%W%                       ╚███╔███╔╝██║██║ ╚████║██████╔╝╚██████╔╝╚███╔███╔╝███████║                         %C%║
-echo. %C%║%W%                        ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝╚═════╝  ╚═════╝  ╚══╝╚══╝ ╚══════╝                         %C%║
-echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [A]%W% Optimize Windows Settings                  %R%[B]%W% optimize Explorer Settings                  %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [C]%W% Disable Adds and Popups                    %R%[D]%W% Windows Tweaks                              %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [E]%W% Disable Smart Screen                       %R%[F]%W% Game Mode                                   %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [G]%W% Disable Feedback                           %R%[H]%W% Disable Telementry                          %C%║        
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [I]%W% Disable Synchronization                    %R%[J]%W% Optimize Privacy Settings                   %C%║  
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [K]%W% Stop Reinstalling Preinstalled apps        %R%[L]%W% Disable Cortana                             %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [M]%W% Disable Error Reporting                    %R%[N]%W% Disable printing and maps Services          %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [O]%W% Disable Windows Insider                    %R%[P]%W% Disable Useless Windows Services            %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%W%                                             %R%[X] Back                                                     %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+echo. %B%╔══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+echo. %B%║%W%                       ██╗    ██╗██╗███╗   ██╗██████╗  ██████╗ ██╗    ██╗███████╗                         %B%║
+echo. %B%║%W%                       ██║    ██║██║████╗  ██║██╔══██╗██╔═══██╗██║    ██║██╔════╝                         %B%║
+echo. %B%║%W%                       ██║ █╗ ██║██║██╔██╗ ██║██║  ██║██║   ██║██║ █╗ ██║███████╗                         %B%║
+echo. %B%║%W%                       ██║███╗██║██║██║╚██╗██║██║  ██║██║   ██║██║███╗██║╚════██║                         %B%║
+echo. %B%║%W%                       ╚███╔███╔╝██║██║ ╚████║██████╔╝╚██████╔╝╚███╔███╔╝███████║                         %B%║
+echo. %B%║%W%                        ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝╚═════╝  ╚═════╝  ╚══╝╚══╝ ╚══════╝                         %B%║
+echo. %B%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [1]%W% Optimize Windows Settings                  %R%[2]%W% optimize Explorer Settings                  %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [3]%W% Disable Adds and Popups                    %R%[4]%W% Windows Tweaks                              %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [5]%W% Disable Smart Screen                       %R%[6]%W% Game Mode                                   %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [7]%W% Disable Feedback                           %R%[8]%W% Disable Telementry                          %B%║        
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [9]%W% Disable Synchronization                    %R%[10]%W% Optimize Privacy Settings                  %B%║  
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [11]%W% Stop Reinstalling Preinstalled apps       %R%[12]%W% Disable Cortana                            %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [13]%W% Disable Error Reporting                   %R%[14]%W% Disable printing and maps Services         %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [15]%W% Disable Windows Insider                   %R%[16]%W% Disable Useless Windows Services           %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%W%                                             %R%[B] Back                                                     %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 
 set /p input=:
-
 if /i %input% == 1 goto W1
 if /i %input% == 2 goto W2
 if /i %input% == 3 goto W3
@@ -525,7 +512,7 @@ if /i %input% == 14 goto W14
 if /i %input% == 15 goto W15
 if /i %input% == 16 goto W16
 
-if /i %input% ==X goto menu
+if /i %input% == B goto menu
 
 ) ELSE (
 echo Invalid Input & goto MisspellRedirect
@@ -990,8 +977,8 @@ echo Slim Windows Defender and SmartScreen
 goto Windows
 
 :W6
-Reg.exe add "HKCU\SOFTWARE\Microsoft\GameBar" /v "AllowAutoGameMode" /t REG_DWORD /d "1" /f 
-Reg.exe add "HKCU\SOFTWARE\Microsoft\GameBar" /v "AutoGameModeEnabled" /t REG_DWORD /d "1" /f 
+Reg.exe add "HKCU\SOFTWARE\Microsoft\GameBar" /v "AllowAutoGameMode" /t REG_DWORD /d "0" /f 
+Reg.exe add "HKCU\SOFTWARE\Microsoft\GameBar" /v "AutoGameModeEnabled" /t REG_DWORD /d "0" /f 
 goto Windows
 
 :W7
@@ -1432,33 +1419,32 @@ cls
 echo.
 echo.
 echo.
-echo. %C%╔══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
-echo. %C%║%W%                      ██████╗██╗     ███████╗ █████╗ ███╗   ██╗██╗   ██╗██████╗                           %C%║
-echo. %C%║%W%                     ██╔════╝██║     ██╔════╝██╔══██╗████╗  ██║██║   ██║██╔══██╗                          %C%║
-echo. %C%║%W%                     ██║     ██║     █████╗  ███████║██╔██╗ ██║██║   ██║██████╔╝                          %C%║
-echo. %C%║%W%                     ██║     ██║     ██╔══╝  ██╔══██║██║╚██╗██║██║   ██║██╔═══╝                           %C%║
-echo. %C%║%W%                     ╚██████╗███████╗███████╗██║  ██║██║ ╚████║╚██████╔╝██║                               %C%║
-echo. %C%║%W%                      ╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝                               %C%║ 
-echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [1]%W% Temp File CleanUp                          %R%[2]%W% Device Cleanup                              %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [3]%W% Debloat Apps                               %R%[4]%W% Remove One Drive                            %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%W%                                             %R%[X] Back                                                     %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+echo. %B%╔══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+echo. %B%║%W%                      ██████╗██╗     ███████╗ █████╗ ███╗   ██╗██╗   ██╗██████╗                           %B%║
+echo. %B%║%W%                     ██╔════╝██║     ██╔════╝██╔══██╗████╗  ██║██║   ██║██╔══██╗                          %B%║
+echo. %B%║%W%                     ██║     ██║     █████╗  ███████║██╔██╗ ██║██║   ██║██████╔╝                          %B%║
+echo. %B%║%W%                     ██║     ██║     ██╔══╝  ██╔══██║██║╚██╗██║██║   ██║██╔═══╝                           %B%║
+echo. %B%║%W%                     ╚██████╗███████╗███████╗██║  ██║██║ ╚████║╚██████╔╝██║                               %B%║
+echo. %B%║%W%                      ╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝                               %B%║ 
+echo. %B%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [1]%W% Temp File CleanUp                          %R%[2]%W% Device Cleanup                              %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [3]%W% Debloat Apps                               %R%[4]%W% Remove One Drive                            %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%W%                                             %R%[B] Back                                                     %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 
 set /p input=:
-
 if /i %input% == 1 goto C1
 if /i %input% == 2 goto C2
 if /i %input% == 3 goto C3
 if /i %input% == 4 goto C4
 
-if /i %input% == X goto Menu
+if /i %input% == B goto menu
 
 ) ELSE (
 echo Invalid Input & goto MisspellRedirect
@@ -1571,7 +1557,6 @@ powershell.exe "Get-AppxPackage *Microsoft.People* | Remove-AppxPackage"
 powershell.exe "Get-AppxPackage *Microsoft.Print3D* | Remove-AppxPackage"
 powershell.exe "Get-AppxPackage *Microsoft.SkypeApp* | Remove-AppxPackage"
 powershell.exe "Get-AppxPackage *Microsoft.Wallet* | Remove-AppxPackage"
-powershell.exe "Get-AppxPackage *Microsoft.Windows.Photos* | Remove-AppxPackage"
 powershell.exe "Get-AppxPackage *Microsoft.WindowsAlarms* | Remove-AppxPackage"
 powershell.exe "Get-AppxPackage *Microsoft.WindowsCamera* | Remove-AppxPackage"
 powershell.exe "Get-AppxPackage *Microsoft.windowscommunicationsapps* | Remove-AppxPackage"
@@ -1670,7 +1655,6 @@ powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Micr
 powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.Print3D* | Remove-AppxProvisionedPackage -Online"
 powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.SkypeApp* | Remove-AppxProvisionedPackage -Online"
 powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.Wallet* | Remove-AppxProvisionedPackage -Online"
-powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.Windows.Photos* | Remove-AppxProvisionedPackage -Online"
 powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.WindowsAlarms* | Remove-AppxProvisionedPackage -Online"
 powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.WindowsCamera* | Remove-AppxProvisionedPackage -Online"
 powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.windowscommunicationsapps* | Remove-AppxProvisionedPackage -Online"
@@ -1707,6 +1691,7 @@ goto Clean
 :C4
 winget uninstall onedrive
 winget uninstall Microsoft. OneDrive
+powershell -Command Get-AppxPackage⁣ Microsoft.OneDrive | Remove-AppxPackage.
 
 goto Clean
 
@@ -1769,18 +1754,17 @@ echo.%W% █████═╝░██████╦╝██╔████�
 echo.%W% ██╔═██╗░██╔══██╗██║╚██╔╝██║
 echo.%W% ██║░╚██╗██████╦╝██║░╚═╝░██║
 echo.%W% ╚═╝░░╚═╝╚═════╝░╚═╝░░░░░╚═╝
-echo.%C%╔══════════════════════════════════════════════════════════════════════════════════════════════╗
-echo.%C%║                      %w% Low mouse data queue size lowers input delay,                          %C%║
-echo.%C%║                     %w% but it may cause mouse and kb lag on low end CPUs                       %C%║        
-echo.%C%║                                                                                              %C%║
-echo.%C%║           %R%[1]%w% High End CPU        %R%[2]%w% Mid end CPU          %R%[3]%w% Low end CPU                   %C%║
-echo.%C%║                                                                                              %C%║
-echo.%C%╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+echo.%b%╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+echo.%b%║                      %w% Low mouse data queue size lowers input delay,                          %b%║
+echo.%b%║                     %w% but it may cause mouse and kb lag on low end CPUs                       %b%║        
+echo.%b%║                                                                                              %b%║
+echo.%b%║           %R%[1]%w% High End CPU        %R%[2]%w% Mid end CPU          %R%[3]%w% Low end CPU                   %b%║
+echo.%b%║                                                                                              %b%║
+echo.%b%╚══════════════════════════════════════════════════════════════════════════════════════════════╝
 echo.
 
-set /p input=:
-
-if /i %input% == 1 goto high
+set /p input=: 
+if /i %input% == 1 goto High 
 if /i %input% == 2 goto Mid
 if /i %input% == 3 goto Low
 
@@ -1790,10 +1774,11 @@ echo Invalid Input & goto MisspellRedirect
 :MisspellRedirect
 cls
 echo Misspell Detected
-timeout 2
-goto RedirectMenu
+timeout 2 
+goto Redirectmouse
 
-:RedirectMenu
+
+:Redirectmouse
 cls
 goto :menu
 
@@ -1810,8 +1795,8 @@ goto Menu
 :low
 Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDataQueueSize" /t REG_DWORD /d "35" /f
 Reg.exe add "HKLM\SYSTEM\CurrentControlSet\Services\kbdclass\Parameters" /v "KeyboardDataQueueSize" /t REG_DWORD /d "35" /f
-goto Menu
 
+goto Menu
 
 
 :Power
@@ -1886,23 +1871,17 @@ goto menu
 :GPU
 
 cls
-echo.%C%╔══════════════════════════════════════════════════════════════════════════════════════════════╗
-echo.%C%║                      %w% Low mouse data queue size lowers input delay,                          %C%║
-echo.%C%║                     %w% but it may cause mouse and kb lag on low end CPUs                       %C%║        
-echo.%C%║                                                                                              %C%║
-echo.%C%║           %R%[1]%w% NVIDIA Geforce     %R%[2]%w% AMD Radeon           %R%[3]%w% Intel GPU                      %C%║
-echo.%C%║                                                                                              %C%║
-echo.%C%╠══════════════════════════════════════════════════════════════════════════════════════════════╣
-echo.%C%║%W%                                    %R%[B] Menu                                               %C%║     
-echo.%C%╚══════════════════════════════════════════════════════════════════════════════════════════════╝
-
-set /p input=:
-
-if /i %input% == 1 goto C1
-if /i %input% == 2 goto C2
-if /i %input% == 3 goto C3
-
-if /i %input% == X goto Menu
+echo.%b%╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+echo.%b%║                      %w% Low mouse data queue size lowers input delay,                          %b%║
+echo.%b%║                     %w% but it may cause mouse and kb lag on low end CPUs                       %b%║        
+echo.%b%║                                                                                              %b%║
+echo.%b%║           %R%[1]%w% NVIDIA Geforce     %R%[2]%w% AMD Radeon           %R%[3]%w% Intel GPU                      %b%║
+echo.%b%║                                                                                              %b%║
+echo.%b%╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+set /p input=: 
+if /i %input% == 1 goto Nvidia
+if /i %input% == 2 goto AMD
+if /i %input% == 3 goto Intel
 
 ) ELSE (
 echo Invalid Input & goto MisspellRedirect
@@ -1910,38 +1889,40 @@ echo Invalid Input & goto MisspellRedirect
 :MisspellRedirect
 cls
 echo Misspell Detected
-timeout 2
-goto RedirectMenu
+timeout 2 
+goto Redirectmouse
 
-:RedirectMenu
+
+:Redirectmouse
+cls
 goto :GPU
 
 :Nvidia
 cls
-echo. %C%╔══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
-echo. %C%║%W%                             ███╗   ██╗██╗   ██╗██╗██████╗ ██╗ █████╗                                     %C%║
-echo. %C%║%W%                             ████╗  ██║██║   ██║██║██╔══██╗██║██╔══██╗                                    %C%║
-echo. %C%║%W%                             ██╔██╗ ██║██║   ██║██║██║  ██║██║███████║                                    %C%║
-echo. %C%║%W%                             ██║╚██╗██║╚██╗ ██╔╝██║██║  ██║██║██╔══██║                                    %C%║
-echo. %C%║%W%                             ██║ ╚████║ ╚████╔╝ ██║██████╔╝██║██║  ██║                                    %C%║
-echo. %C%║%W%                             ╚═╝  ╚═══╝  ╚═══╝  ╚═╝╚═════╝ ╚═╝╚═╝  ╚═╝                                    %C%║  
-echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [1]%W% NVIDIA GENERAL TWEAKS                      %R%[2]%W% CONTROL PANEL SETTINGS                      %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [3]%W% DISABLE NVIDIA HDCP                        %R%[4]%W% DISABLE NVIDIA TELEMENTRY                   %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [5]%W% DOWNLOAD NVIDIA DRIVER                     %R%[6]%W% HIDDEN NVIDIA TWEAKS                        %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%W%                                          %R%[B] Menu                                                        %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%W%                     %R%[x]%w% CHOOSE THE WRONG GPU GO BACK AND CHOOSE ANOTHER                                  %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+echo. %B%╔══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+echo. %B%║%W%                             ███╗   ██╗██╗   ██╗██╗██████╗ ██╗ █████╗                                     %B%║
+echo. %B%║%W%                             ████╗  ██║██║   ██║██║██╔══██╗██║██╔══██╗                                    %B%║
+echo. %B%║%W%                             ██╔██╗ ██║██║   ██║██║██║  ██║██║███████║                                    %B%║
+echo. %B%║%W%                             ██║╚██╗██║╚██╗ ██╔╝██║██║  ██║██║██╔══██║                                    %B%║
+echo. %B%║%W%                             ██║ ╚████║ ╚████╔╝ ██║██████╔╝██║██║  ██║                                    %B%║
+echo. %B%║%W%                             ╚═╝  ╚═══╝  ╚═══╝  ╚═╝╚═════╝ ╚═╝╚═╝  ╚═╝                                    %B%║  
+echo. %B%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [1]%W% NVIDIA GENERAL TWEAKS                      %R%[2]%W% CONTROL PANEL SETTINGS                      %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [3]%W% DISABLE NVIDIA HDCP                        %R%[4]%W% DISABLE NVIDIA TELEMENTRY                   %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [5]%W% DOWNLOAD NVIDIA DRIVER                     %R%[6]%W% HIDDEN NVIDIA TWEAKS                        %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%W%                                          %R%[B] Menu                                                        %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%W%                     %R%[x]%w% CHOOSE THE WRONG GPU GO BACK AND CHOOSE ANOTHER                                  %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 
-set /p input=:
+set /p input=: 
 if /i %input% == 1 goto NVIDIA1
 if /i %input% == 2 goto NVIDIA2
 if /i %input% == 3 goto NVIDIA3
@@ -1950,7 +1931,7 @@ if /i %input% == 5 goto NVIDIA5
 if /i %input% == 6 goto NVIDIA6
 
 if /i %input% == B goto Menu
-if /i %input% == X goto GPU
+if /i %input% == B goto GPU
 
 ) ELSE (
 echo Invalid Input & goto MisspellRedirect
@@ -1958,10 +1939,11 @@ echo Invalid Input & goto MisspellRedirect
 :MisspellRedirect
 cls
 echo Misspell Detected
-timeout 2
-goto RedirectMenu
+timeout 2 
+goto Redirectmouse
 
-:RedirectMenu
+
+:Redirectmouse
 cls
 goto :Nvidia
 
@@ -2331,26 +2313,26 @@ goto menu
 
 :Net
 cls
-echo. %C%╔══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
-echo. %C%║%W%                   ███╗   ██╗███████╗████████╗██╗    ██╗ ██████╗ ██████╗ ██╗  ██╗                         %C%║
-echo. %C%║%W%                   ████╗  ██║██╔════╝╚══██╔══╝██║    ██║██╔═══██╗██╔══██╗██║ ██╔╝                         %C%║
-echo. %C%║%W%                   ██╔██╗ ██║█████╗     ██║   ██║ █╗ ██║██║   ██║██████╔╝█████╔╝                          %C%║
-echo. %C%║%W%                   ██║╚██╗██║██╔══╝     ██║   ██║███╗██║██║   ██║██╔══██╗██╔═██╗                          %C%║ 
-echo. %C%║%W%                   ██║ ╚████║███████╗   ██║   ╚███╔███╔╝╚██████╔╝██║  ██║██║  ██╗                         %C%║
-echo. %C%║%W%                   ╚═╝  ╚═══╝╚══════╝   ╚═╝    ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝                         %C%║
-echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [1]%W% Optimize DNS Server                        %R%[2]%W% Optimize general Network settings           %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [3]%W% Optimize network TCP Settings              %R%[4]%W% Network priority                            %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%           [5]%W% Optimize Network Adapter settings          %R%[6]%W% Update Network drivers                      %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%W%                                          %R%[B] Menu                                                        %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+echo. %B%╔══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+echo. %B%║%W%                   ███╗   ██╗███████╗████████╗██╗    ██╗ ██████╗ ██████╗ ██╗  ██╗                         %B%║
+echo. %B%║%W%                   ████╗  ██║██╔════╝╚══██╔══╝██║    ██║██╔═══██╗██╔══██╗██║ ██╔╝                         %B%║
+echo. %B%║%W%                   ██╔██╗ ██║█████╗     ██║   ██║ █╗ ██║██║   ██║██████╔╝█████╔╝                          %B%║
+echo. %B%║%W%                   ██║╚██╗██║██╔══╝     ██║   ██║███╗██║██║   ██║██╔══██╗██╔═██╗                          %B%║ 
+echo. %B%║%W%                   ██║ ╚████║███████╗   ██║   ╚███╔███╔╝╚██████╔╝██║  ██║██║  ██╗                         %B%║
+echo. %B%║%W%                   ╚═╝  ╚═══╝╚══════╝   ╚═╝    ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝                         %B%║
+echo. %B%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [1]%W% Optimize DNS Server                        %R%[2]%W% Optimize general Network settings           %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [3]%W% Optimize network TCP Settings              %R%[4]%W% Network priority                            %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%           [5]%W% Optimize Network Adapter settings          %R%[6]%W% Update Network drivers                      %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%W%                                          %R%[B] Menu                                                        %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 
 set /p input=: 
 if /i %input% == 1 goto Net1
@@ -2584,11 +2566,11 @@ echo NIC
 goto :Net
 :Net6
 cls
-echo.%C%╔══════════════════════════════════════════════════════════════════════════════════════════════╗   
-echo.%C%║                                                                                              %C%║
-echo.%C%║           %R%[1]%w% Realtek Driver     %R%[2]%w% Intel Driver     %R%[3]%w% Broadcom Driver                   %C%║
-echo.%C%║                                                                                              %C%║
-echo.%C%╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+echo.%b%╔══════════════════════════════════════════════════════════════════════════════════════════════╗   
+echo.%b%║                                                                                              %b%║
+echo.%b%║           %R%[1]%w% Realtek Driver     %R%[2]%w% Intel Driver     %R%[3]%w% Broadcom Driver                   %b%║
+echo.%b%║                                                                                              %b%║
+echo.%b%╚══════════════════════════════════════════════════════════════════════════════════════════════╝
 set /p input=: 
 if /i %input% == 1 goto Realtek
 if /i %input% == 2 goto Intelnet
@@ -2734,17 +2716,17 @@ goto menu
 
 :Games
 cls
-echo. %C%╔══════════════════════════════════════════╗
-echo. %C%║%W%                                          %C%║
-echo. %C%║%W%     Pick the Game You want to optimize   %C%║
-echo. %C%║%W%                                          %C%║
-echo. %C%║%R%     [1]%W% Counter strike 2                 %C%║
-echo. %C%║%W%                                          %C%║
-echo. %C%║%R%     [2]%W% Fortnite                         %C%║              
-echo. %C%║%W%                                          %C%║
-echo. %C%╠══════════════════════════════════════════╣
-echo. %C%║%R%     [B] Go back                          %C%║
-echo. %C%╚══════════════════════════════════════════╝
+echo. %B%╔══════════════════════════════════════════╗
+echo. %B%║%W%                                          %B%║
+echo. %B%║%W%     Pick the Game You want to optimize   %B%║
+echo. %B%║%W%                                          %B%║
+echo. %B%║%R%     [1]%W% Counter strike 2                 %B%║
+echo. %B%║%W%                                          %B%║
+echo. %B%║%R%     [2]%W% Fortnite                         %B%║              
+echo. %B%║%W%                                          %B%║
+echo. %B%╠══════════════════════════════════════════╣
+echo. %B%║%R%     [B] Go back                          %B%║
+echo. %b%╚══════════════════════════════════════════╝
 
 set /p input=: 
 if /i %input% == 1 goto CS2
@@ -3012,21 +2994,21 @@ reg add "HKEY_CURRENT_USER\Software\AMD\Gaming\GpuPwrMode" /v "FortniteClient-Wi
 netsh advfirewall firewall add rule name="StopThrottling" dir=in action=block remoteip=173.194.55.0/24,206.111.0.0/16 enable=yes
 
 :Resolution
-echo. %C%╔══════════════════════════════════════════╗
-echo. %C%║%W%                                          %C%║
-echo. %C%║%W%     %C%Pick Your Resolution                 %C%║
-echo. %C%║%W%                                          %C%║
-echo. %C%║%R%     [1]%W% Native (4K)                      %C%║
-echo. %C%║%W%                                          %C%║
-echo. %C%║%R%     [2]%W% Native (1440p)                   %C%║
-echo. %C%║%W%                                          %C%║
-echo. %C%║%R%     [3]%W% Native (1080p)                   %C%║
-echo. %C%║%W%                                          %C%║
-echo. %C%║%R%     [4]%W% Streched (1650x1080)             %C%║
-echo. %C%║%W%                                          %C%║
-echo. %C%║%R%     [5]%W% Streched (1440x1080)             %C%║              
-echo. %C%║%W%                                          %C%║
-echo. %C%╚══════════════════════════════════════════╝
+echo. %B%╔══════════════════════════════════════════╗
+echo. %B%║%W%                                          %B%║
+echo. %B%║%W%     %C%Pick Your Resolution                 %B%║
+echo. %B%║%W%                                          %B%║
+echo. %B%║%R%     [1]%W% Native (4K)                      %B%║
+echo. %B%║%W%                                          %B%║
+echo. %B%║%R%     [2]%W% Native (1440p)                   %B%║
+echo. %B%║%W%                                          %B%║
+echo. %B%║%R%     [3]%W% Native (1080p)                   %B%║
+echo. %B%║%W%                                          %B%║
+echo. %B%║%R%     [4]%W% Streched (1650x1080)             %B%║
+echo. %B%║%W%                                          %B%║
+echo. %B%║%R%     [5]%W% Streched (1440x1080)             %B%║              
+echo. %B%║%W%                                          %B%║
+echo. %b%╚══════════════════════════════════════════╝
 
 set /p input=: 
 if /i %input% == 1 goto 4k
@@ -3085,12 +3067,16 @@ replace "c:\Ra1nerFree\GameUserSettings.ini" "%Localappdata%\FortniteGame\Saved\
 goto Games
 
 :BCD
+
+
+
 else (
 ::Disable HPET
 sc config "STR" start=disabled >nul 2>&1
 sc stop STR >nul 2>&11
 bcdedit /deletevalue useplatformclock 
 bcdedit /set disabledynamictick yes 
+bcdedit /set useplatformtick yes
 echo Disable HPET
 )
 
@@ -3159,33 +3145,33 @@ goto menu
 
 :Advanced
 cls
-echo. %C%╔══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
-echo. %C%║%R%             █████╗ ██████╗ ██╗   ██╗ █████╗ ███╗   ██╗ ██████╗███████╗██████╗                            %C%║
-echo. %C%║%R%            ██╔══██╗██╔══██╗██║   ██║██╔══██╗████╗  ██║██╔════╝██╔════╝██╔══██╗                           %C%║
-echo. %C%║%R%            ███████║██║  ██║██║   ██║███████║██╔██╗ ██║██║     █████╗  ██║  ██║                           %C%║
-echo. %C%║%R%            ██╔══██║██║  ██║╚██╗ ██╔╝██╔══██║██║╚██╗██║██║     ██╔══╝  ██║  ██║                           %C%║
-echo. %C%║%R%            ██║  ██║██████╔╝ ╚████╔╝ ██║  ██║██║ ╚████║╚██████╗███████╗██████╔╝                           %C%║
-echo. %C%║%R%            ╚═╝  ╚═╝╚═════╝   ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝╚══════╝╚═════╝                            %C%║
-echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%W%                               BE %R%REALLY CAREFULL%W% With these Changes                                      %C%║
-echo. %C%║%W%            since it can be very confusing to fix if you dont know what you are doing                     %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%         [1]%W% Block Windows Updates (Can cause Microsoft apps not to install)                              %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%         [2]%W% Remove Microsoft Edge (Apps like Disney+ Will not be useable if you remove microsoft edge)   %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%         [3]%W% Disable Bluetooth (Says it self you wont be able to use devices over bluetooth)              %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%         [4]%W% Disable Xbox Services (You wont be able to login to Games from the Xbox store)               %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%W%         [R]%W% Revert these Settings                                                                        %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%W%                                             %R%[B] Back                                                     %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+echo. %B%╔══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+echo. %B%║%R%             █████╗ ██████╗ ██╗   ██╗ █████╗ ███╗   ██╗ ██████╗███████╗██████╗                            %B%║
+echo. %B%║%R%            ██╔══██╗██╔══██╗██║   ██║██╔══██╗████╗  ██║██╔════╝██╔════╝██╔══██╗                           %B%║
+echo. %B%║%R%            ███████║██║  ██║██║   ██║███████║██╔██╗ ██║██║     █████╗  ██║  ██║                           %B%║
+echo. %B%║%R%            ██╔══██║██║  ██║╚██╗ ██╔╝██╔══██║██║╚██╗██║██║     ██╔══╝  ██║  ██║                           %B%║
+echo. %B%║%R%            ██║  ██║██████╔╝ ╚████╔╝ ██║  ██║██║ ╚████║╚██████╗███████╗██████╔╝                           %B%║
+echo. %B%║%R%            ╚═╝  ╚═╝╚═════╝   ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝╚══════╝╚═════╝                            %B%║
+echo. %B%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%W%                               BE %R%REALLY CAREFULL%W% With these Changes                                      %B%║
+echo. %B%║%W%            since it can be very confusing to fix if you dont know what you are doing                     %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%         [1]%W% Block Windows Updates (Can cause Microsoft apps not to install)                              %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%         [2]%W% Remove Microsoft Edge (Apps like Disney+ Will not be useable if you remove microsoft edge)   %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%         [3]%W% Disable Bluetooth (Says it self you wont be able to use devices over bluetooth)              %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%         [4]%W% Disable Xbox Services (You wont be able to login to Games from the Xbox store)               %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%W%         [R]%W% Revert these Settings                                                                        %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%W%                                             %R%[B] Back                                                     %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 
 set /p input=: 
 if /i %input% == 1 goto A1
@@ -3243,21 +3229,21 @@ goto Advanced
 
 :UndoAdvanced
 cls
-echo. %C%╔══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%         [1]%W% Enable Windows Updates                                                                       %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%         [2]%W% Reinstall Microsoft Edge                                                                     %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%         [3]%W% Enable Bluetooth                                                                             %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%         [4]%W% Enable Xbox Services                                                                         %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%║%R%         [B] Back                                                                                         %C%║
-echo. %C%║%W%                                                                                                          %C%║
-echo. %C%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+echo. %B%╔══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%         [1]%W% Enable Windows Updates                                                                       %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%         [2]%W% Reinstall Microsoft Edge                                                                     %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%         [3]%W% Enable Bluetooth                                                                             %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%         [4]%W% Enable Xbox Services                                                                         %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%╠══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%║%R%         [B] Back                                                                                         %B%║
+echo. %B%║%W%                                                                                                          %B%║
+echo. %B%╚══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 
 set /p input=: 
 if /i %input% == 1 goto UA1
