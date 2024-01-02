@@ -84,7 +84,7 @@ if "%DevBuild%" neq "Yes" if "%Version%" lss "!latestVersion!" (cls
 	echo.
 	choice /c:"YN" /n /m "%BS%                   [Y] Yes  [N] No"
 	if !errorlevel! equ 1 (
-		curl -L -o "%~s0" "https://github.com/imRa1ner2/Ra1ner2.0/releases/download/V2.0/Ra1ners.Free.Optimizer.bat" >nul 2>&1
+		curl -g -k -L -# -o "%~s0" "https://github.com/imRa1ner2/Ra1ner2.0/releases/download/V2.0/Ra1ners.Free.Optimizer.bat" >nul 2>&1
 		call "%~s0"
 	)
 )
