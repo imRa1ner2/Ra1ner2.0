@@ -1,5 +1,5 @@
 @echo off
-set version=2.1
+set version=1.1
 set DevBuild=No
 
 reg.exe Add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "EnableLUA" /t  REG_DWORD /d "00000000" /f
