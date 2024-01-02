@@ -1,18 +1,9 @@
 @echo off
 set version=2.1
-
-::-----------------------------------------::
-::             Disable UAC                 ::
-::-----------------------------------------::
+set DevBuild=No
 
 reg.exe Add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "EnableLUA" /t  REG_DWORD /d "00000000" /f
 
-::-----------------------------------------::
- 
-
-::-----------------------------------------::
-::                Colors                   ::
-::-----------------------------------------::
 :: White
 set "w=[97m"
 
@@ -43,8 +34,6 @@ set "y=[33m"
 :: Orange
 set "o=[93m"
 
-::-----------------------------------------::
-
 ::Enable Delayed Expansion
 setlocal EnableDelayedExpansion
 
@@ -71,12 +60,34 @@ echo %BS%             press C to continue anyway
 choice /c:"CQ" /n /m "%BS%               [C] Continue  [Q] Quit" & if !errorlevel! equ 2 exit /b
 )
 
+::Check For Internet
+Ping www.google.nl -n 1 -w 1000 >nul
+if %errorlevel% neq 0 (
+echo.
+echo %BS%               No Internet Connection
+echo %BS%             press C to continue anyway
+choice /c:"CQ" /n /m "%BS%               [C] Continue  [Q] Quit" & if !errorlevel! equ 2 exit /b
+)
 
 ::Run CMD in 32-Bit
 set SystemPath=%SystemRoot%\System32
 if not "%ProgramFiles(x86)%"=="" (if exist %SystemRoot%\Sysnative\* set SystemPath=%SystemRoot%\Sysnative)
 if "%processor_architecture%" neq "AMD64" (start "" /I "%SystemPath%\cmd.exe" /c "%~s0" & exit /b)
 
+::Check For Updates
+curl -g -k -L -# -o "%tmp%\latestVersion.bat" "https://raw.githubusercontent.com/imRa1ner2/Ra1ner2.0/main/latestVersion.bat" >nul 2>&1
+call "%tmp%\latestVersion.bat"
+if "%DevBuild%" neq "Yes" if "%Version%" lss "!latestVersion!" (cls
+	echo.
+	echo             Warning, Utility isn't updated.
+	echo        Would you like to update to version %W%!latestVersion!?
+	echo.
+	choice /c:"YN" /n /m "%BS%                   [Y] Yes  [N] No"
+	if !errorlevel! equ 1 (
+		curl -L -o "%~s0" "https://github.com/imRa1ner2/Ra1ner2.0/releases/download/V2.0/Ra1ners.Free.Optimizer.bat" >nul 2>&1
+		call "%~s0"
+	)
+)
 
 if not exist "%SystemRoot%\System32\wbem\WMIC.exe" (
 :: WMI Settings
@@ -225,23 +236,6 @@ echo.                ╚══════════════════�
 pause > nul
 cls
 
-::Check For Updates
-curl -g -k -L -# -o "%tmp%\latestVersion.bat" "https://raw.githubusercontent.com/imRa1ner2/Ra1ner2.0/main/latestVersion.bat" >nul 2>&1
-call "%tmp%\latestVersion.bat"
-if "%DevBuild%" neq "Yes" if "%Version%" lss "%latestVersion%" (cls
-	call:EchoXLogo
-	echo.
-	echo             Warning, Utility isn't updated.
-	echo        Would you like to update to version %W%%latestVersion%?
-	echo.
-	choice /c:"YN" /n /m "%BS%                   [Y] Yes  [N] No"
-	if !errorlevel! equ 1 (
-		curl -L -o "%~s0" "https://github.com/imRa1ner2/Ra1ner2.0/releases/download/V2.0/Ra1ners.Free.Optimizer.bat" >nul 2>&1
-		call "%~s0"
-	)
-)
-
-cls
 :Download
 md C:\Ra1nerFree
 cls
