@@ -1,5 +1,5 @@
 @echo off
-set version=1.2
+set version=2.1
 
 ::-----------------------------------------::
 ::             Disable UAC                 ::
