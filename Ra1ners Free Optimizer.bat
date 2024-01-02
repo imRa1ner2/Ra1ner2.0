@@ -225,6 +225,23 @@ echo.                ╚══════════════════�
 pause > nul
 cls
 
+::Check For Updates
+curl -g -k -L -# -o "%tmp%\latestVersion.bat" "https://raw.githubusercontent.com/imRa1ner2/Ra1ner2.0/main/latestVersion.bat" >nul 2>&1
+call "%tmp%\latestVersion.bat"
+if "%DevBuild%" neq "Yes" if "%Version%" lss "%latestVersion%" (cls
+	call:EchoXLogo
+	echo.
+	echo             Warning, Utility isn't updated.
+	echo        Would you like to update to version %W%%latestVersion%?
+	echo.
+	choice /c:"YN" /n /m "%BS%                   [Y] Yes  [N] No"
+	if !errorlevel! equ 1 (
+		curl -L -o "%~s0" "https://github.com/imRa1ner2/Ra1ner2.0/releases/download/V2.0/Ra1ners.Free.Optimizer.bat" >nul 2>&1
+		call "%~s0"
+	)
+)
+
+cls
 :Download
 md C:\Ra1nerFree
 cls
